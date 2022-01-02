@@ -59,4 +59,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 #define     LABEL_MAX_MASK          0xFFFFFU
 #endif
 
+void make_iflist();
+char if_index[1024][20];
+char if_name[1024][20];
+
 #endif /* _IP_COMMON_H_ */

@@ -120,8 +120,26 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
 	printf("\nThis Interface's index is %d",ifi->ifi_index);
 	if(tb[IFLA_LINK]) printf("\nThis Interface's number is %d\n",rta_getattr_u32(tb[IFLA_LINK]));
+	printf("This Interface's name is %s\n",get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
+	fflush(fp);
+	return 1;
+}
+
+int set_iflist(struct nlmsghdr *n, void *arg, char *num, char *name)
+{
+	FILE *fp = (FILE *)arg;
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_MAX+1];
+	int len = n->nlmsg_len;
+
+	len -= NLMSG_LENGTH(sizeof(*ifi));
+
+	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
+	*num=ifi->ifi_index;
+	*name=get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
+
 	fflush(fp);
 	return 1;
 }
@@ -486,4 +504,59 @@ int do_ipaddr(int argc, char **argv)
 {
 	return ipaddr_list_flush_or_save(0, NULL, IPADD_LIST);
 	exit(-1);
+}
+
+void make_iflist(){
+	struct nlmsg_chain linfo = { NULL, NULL};
+	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
+	struct nlmsg_list *l;
+	int no_link = 0;
+
+	ipaddr_reset_filter(oneline, 0);
+	filter.showqueue = 1;
+	filter.family = preferred_family;
+
+	/*
+	 * Initialize a json_writer and open an array object
+	 * if -json was specified.
+	 */
+	new_json_obj(json);
+
+	if (filter.ifindex) {
+		if (ipaddr_link_get(filter.ifindex, &linfo) != 0)
+			goto out;
+	} else {
+		if (ip_link_list(iplink_filter_req, &linfo) != 0)
+			goto out;
+	}
+
+	if (filter.family != AF_PACKET) {
+		if (filter.oneline)
+			no_link = 1;
+
+		if (ip_addr_list(ainfo) != 0)
+			goto out;
+
+		ipaddr_filter(&linfo, ainfo);
+	}
+
+	int i=0;
+	for (l = linfo.head; l; l = l->next) {
+		struct nlmsghdr *n = &l->h;
+		struct ifinfomsg *ifi = NLMSG_DATA(n);
+		int res = 0;
+
+		open_json_object(NULL);
+		if (brief || !no_link)
+			res = set_iflist(n, stdout,if_index[i][0],if_name[i][0]);
+			i++;
+		close_json_object();
+	}
+	fflush(stdout);
+
+out:
+	free_nlmsg_chain(ainfo);
+	free_nlmsg_chain(&linfo);
+	delete_json_obj();
+	return 0;
 }

@@ -110,7 +110,15 @@ int main(int argc, char **argv)
 
 	rtnl_set_strict_dump(&rth);
 
-	do_cmd(argv[1], argc-1, argv+1, true);
+	make_iflist();
+	for(int i=0;i<1024;i++){
+		if(if_index[i][0]==0) break;
+		for(int j=0;j<20;j++){
+			printf("index:%s\n",if_index[i][0]);
+			printf("name:%s\n",if_name[i][0]);
+		}
+	}
+	return do_cmd(argv[1], argc-1, argv+1, true);
 
 	rtnl_close(&rth);
 	usage();
