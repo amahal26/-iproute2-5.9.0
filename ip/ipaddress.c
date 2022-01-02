@@ -41,9 +41,6 @@ enum {
 
 static struct link_filter filter;
 
-static void usage(void) __attribute__((noreturn));
-
-
 static void print_link_flags(FILE *fp, unsigned int flags, unsigned int mdown)
 {
 	open_json_array(PRINT_ANY, is_json_context() ? "flags" : "<");

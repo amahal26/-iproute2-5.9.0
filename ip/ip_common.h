@@ -36,6 +36,8 @@ void netns_nsid_socket_init(void);//
 int do_ipaddr(int argc, char **argv);//
 int do_netns(int argc, char **argv);//
 
+void vrf_reset(void);
+
 int ip_link_list(req_filter_fn_t filter_fn, struct nlmsg_chain *linfo);//
 void free_nlmsg_chain(struct nlmsg_chain *info);
 
