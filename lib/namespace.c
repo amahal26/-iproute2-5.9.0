@@ -53,7 +53,7 @@ int netns_switch(char *name)
 	unsigned long mountflags = 0;
 	struct statvfs fsstat;
 
-	snprintf(net_path, sizeof(net_path), "%s/%s", NETNS_RUN_DIR, name);
+	snprintf(net_path, sizeof(net_path), "/proc/%s/ns/net", name);
 	netns = open(net_path, O_RDONLY | O_CLOEXEC);
 	if (netns < 0) {
 		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",

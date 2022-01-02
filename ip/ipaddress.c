@@ -423,6 +423,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	struct nlmsg_chain linfo = { NULL, NULL};
 	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
 	struct nlmsg_list *l;
+	int no_link = 0;
 
 	ipaddr_reset_filter(oneline, 0);
 	filter.showqueue = 1;
@@ -443,6 +444,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	}
 
 	if (filter.family != AF_PACKET) {
+		if (filter.oneline)
+			no_link = 1;
 
 		if (ip_addr_list(ainfo) != 0)
 			goto out;
@@ -456,6 +459,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		int res = 0;
 
 		open_json_object(NULL);
+		if (brief || !no_link)
+			res = print_linkinfo(n, stdout);
 		if (res >= 0 && filter.family != AF_PACKET)
 			print_selected_addrinfo(ifi, ainfo->head, stdout);
 		close_json_object();
