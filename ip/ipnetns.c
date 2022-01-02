@@ -132,7 +132,7 @@ static int netns_exec(int argc, char **argv)
 	 * but do_cmd() will add a minus to this,
 	 * so let's add another one here to cancel it.
 	 */
-	return netns_exec(argc-1, argv+1);
+	return -cmd_exec(argv[1], argv + 1, !!batch_mode, do_switch, argv[0]);
 }
 
 static int invalid_name(const char *name)

@@ -7,9 +7,9 @@ include ../config.mk
 
 ALLOBJ=$(IPOBJ) $(RTMONOBJ)
 SCRIPTS=ifcfg rtpr routel routef
-TARGETS=ip rtmon
+TARGETS=ip
 
-all: $(TARGETS) $(SCRIPTS)
+all: $(TARGETS)
 
 ip: $(IPOBJ) $(LIBNETLINK)
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
