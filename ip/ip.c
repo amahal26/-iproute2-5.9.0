@@ -111,14 +111,13 @@ int main(int argc, char **argv)
 	rtnl_set_strict_dump(&rth);
 
 	make_iflist();
-	for(int i=0;i<1024;i++){
-		if(if_index[i][0]==0) break;
-		for(int j=0;j<20;j++){
-			printf("index:%s\n",if_index[i][0]);
-			printf("name:%s\n",if_name[i][0]);
-		}
-	}
+	//for(int i=0;i<50;i++){
+	//	if(if_index[i]==0) break;
+	//	printf("index:%d\n",if_index[i]);
+	//	printf("name:%s\n",if_name[i]);
+	//}
 	return do_cmd(argv[1], argc-1, argv+1, true);
+	search_name(if_number);
 
 	rtnl_close(&rth);
 	usage();

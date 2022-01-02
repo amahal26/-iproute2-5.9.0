@@ -118,11 +118,12 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	len -= NLMSG_LENGTH(sizeof(*ifi));
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
-	printf("\nThis Interface's index is %d",ifi->ifi_index);
-	if(tb[IFLA_LINK]) printf("\nThis Interface's number is %d\n",rta_getattr_u32(tb[IFLA_LINK]));
-	printf("This Interface's name is %s\n",get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
-
-	print_string(PRINT_FP, NULL, "%s", "\n");
+	//printf("\nThis Interface's index is %d",ifi->ifi_index);
+	//if(tb[IFLA_LINK]) printf("\nThis Interface's number is %d\n",rta_getattr_u32(tb[IFLA_LINK]));
+	//printf("This Interface's name is %s\n",get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
+	if(tb[IFLA_LINK]&&get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME])=="eth0"){
+		if_number=rta_getattr_u32(tb[IFLA_LINK]);
+	}
 	fflush(fp);
 	return 1;
 }
@@ -138,7 +139,7 @@ int set_iflist(struct nlmsghdr *n, void *arg, char *num, char *name)
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
 	*num=ifi->ifi_index;
-	*name=get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
+	strcpy(name,get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
 
 	fflush(fp);
 	return 1;
@@ -212,7 +213,7 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 		rta_tb[IFA_LOCAL] = rta_tb[IFA_ADDRESS];
 
 	if (rta_tb[IFA_LOCAL]) {
-		printf("\nThis Interface's address is %s\n",format_host_rta(ifa->ifa_family,rta_tb[IFA_LOCAL]));
+		//printf("\nThis Interface's address is %s\n",format_host_rta(ifa->ifa_family,rta_tb[IFA_LOCAL]));
 	}
 }
 
@@ -545,10 +546,12 @@ void make_iflist(){
 		struct nlmsghdr *n = &l->h;
 		struct ifinfomsg *ifi = NLMSG_DATA(n);
 		int res = 0;
+		int *index=&if_index[i];
+		char *name=if_name[i];
 
 		open_json_object(NULL);
 		if (brief || !no_link)
-			res = set_iflist(n, stdout,if_index[i][0],if_name[i][0]);
+			set_iflist(n, stdout,index,name);
 			i++;
 		close_json_object();
 	}
@@ -559,4 +562,12 @@ out:
 	free_nlmsg_chain(&linfo);
 	delete_json_obj();
 	return 0;
+}
+
+void search_name(int number){
+	for(int i=0; i<50; i++){
+		if(if_index[i]==number){
+			printf("This process's vNIC name is%s\n",if_index[i]);
+		}
+	}
 }
