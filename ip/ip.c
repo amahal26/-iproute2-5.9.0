@@ -92,6 +92,8 @@ int main(int argc, char **argv)
 {
 	char *basename;
 	int color = 0;
+	int id;
+	char *adr;
 
 	drop_cap();
 
@@ -111,11 +113,11 @@ int main(int argc, char **argv)
 	rtnl_set_strict_dump(&rth);
 
 	make_iflist();
-	//for(int i=0;i<50;i++){
-	//	if(if_index[i]==0) break;
-	//	printf("index:%d\n",if_index[i]);
-	//	printf("name:%s\n",if_name[i]);
-	//}
+	for(int i=0;i<50;i++){
+		if(ninf.if_index[i]==0) break;
+		printf("index:%d\n",ninf.if_index[i]);
+		printf("name:%s\n",ninf.if_name[i]);
+	}
 	return do_cmd(argv[1], argc-1, argv+1, true);
 	search_name(if_number);
 

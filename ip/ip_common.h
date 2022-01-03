@@ -3,6 +3,8 @@
 #define _IP_COMMON_H_
 
 #include <stdbool.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
 #include "json_print.h"
 
@@ -61,9 +63,14 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 
 int set_iflist(struct nlmsghdr *n, void *arg, char *num, char *name);
 void make_iflist(void);
-int if_index[50];
-char if_name[50][20];
 int if_number;
 void search_name(int number);
+
+struct nic_info{
+	int if_index[50];
+	char if_name[50][20];
+};
+
+struct nic_info ninf;
 
 #endif /* _IP_COMMON_H_ */

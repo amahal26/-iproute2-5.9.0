@@ -114,6 +114,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
+	char *eth="eth0";
 
 	len -= NLMSG_LENGTH(sizeof(*ifi));
 
@@ -121,7 +122,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	//printf("\nThis Interface's index is %d",ifi->ifi_index);
 	//if(tb[IFLA_LINK]) printf("\nThis Interface's number is %d\n",rta_getattr_u32(tb[IFLA_LINK]));
 	//printf("This Interface's name is %s\n",get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
-	if(tb[IFLA_LINK]&&get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME])=="eth0"){
+	if(strcmp(eth,get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]))==0){
 		if_number=rta_getattr_u32(tb[IFLA_LINK]);
 	}
 	fflush(fp);
@@ -484,6 +485,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			print_selected_addrinfo(ifi, ainfo->head, stdout);
 		close_json_object();
 	}
+	search_name(if_number);
 	fflush(stdout);
 
 out:
@@ -546,8 +548,8 @@ void make_iflist(){
 		struct nlmsghdr *n = &l->h;
 		struct ifinfomsg *ifi = NLMSG_DATA(n);
 		int res = 0;
-		int *index=&if_index[i];
-		char *name=if_name[i];
+		int *index=&ninf.if_index[i];
+		char *name=ninf.if_name[i];
 
 		open_json_object(NULL);
 		if (brief || !no_link)
@@ -566,8 +568,8 @@ out:
 
 void search_name(int number){
 	for(int i=0; i<50; i++){
-		if(if_index[i]==number){
-			printf("This process's vNIC name is%s\n",if_index[i]);
+		if(ninf.if_index[i]==number){
+			printf("This process's vNIC name is%s\n",ninf.if_name[i]);
 		}
 	}
 }
