@@ -69,7 +69,7 @@ static const struct cmd {
 	const char *cmd;
 	int (*func)(int argc, char **argv);
 } cmds[] = {
-	{ "address",	do_ipaddr },
+	{ "address",	coll_name },
 	{ "netns",	do_netns },
 	{ "help",	do_help },
 	{ 0 }
@@ -112,6 +112,17 @@ int main(int argc, char **argv)
 		exit(1);
 
 	rtnl_set_strict_dump(&rth);
+	printf("do exec\n");
+	if(argc==2&&!strcmp(argv[2],ANOTHER_KEY)){
+		char *new_argv[4];
+		*new_argv[0]=*argv[1];
+		*new_argv[1]=COMMAND_NAME;
+		*new_argv[2]=ANOTHER_KEY;
+		do_netns(3, new_argv);
+	}
+	else if(argc==2&&strcmp(argv[2],ANOTHER_KEY)) get_vnic();
+	else if(argc==4&&strcmp(argv[3],DEFAULT_KEY)) coll_name(argv);
+	else printf("No command\n");
 
 	do_cmd(argv[1], argc-1, argv+1, true);
 

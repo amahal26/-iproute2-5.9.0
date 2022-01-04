@@ -108,39 +108,20 @@ static void print_operstate(FILE *f, __u8 state)
 	}
 }
 
-int print_linkinfo(struct nlmsghdr *n, void *arg, struct nic_info *nic)
+int set_iflist(struct nlmsghdr *n, void *arg, char *index, char *name,int *number)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
-	char *eth="eth0";
 
 	len -= NLMSG_LENGTH(sizeof(*ifi));
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
-	//printf("\nThis Interface's index is %d",ifi->ifi_index);
-	//if(tb[IFLA_LINK]) printf("\nThis Interface's number is %d\n",rta_getattr_u32(tb[IFLA_LINK]));
-	//printf("This Interface's name is %s\n",get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
-	if(strcmp(eth,get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]))==0){
-		if_number=rta_getattr_u32(tb[IFLA_LINK]);
+	*index=ifi->ifi_index;
+	if(strcmp("eth0",get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]))==0){
+		*number=rta_getattr_u32(tb[IFLA_LINK]);
 	}
-	search_name(if_number, nic);
-	fflush(fp);
-	return 1;
-}
-
-int set_iflist(struct nlmsghdr *n, void *arg, char *num, char *name)
-{
-	FILE *fp = (FILE *)arg;
-	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct rtattr *tb[IFLA_MAX+1];
-	int len = n->nlmsg_len;
-
-	len -= NLMSG_LENGTH(sizeof(*ifi));
-
-	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
-	*num=ifi->ifi_index;
 	strcpy(name,get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]));
 
 	fflush(fp);
@@ -439,62 +420,6 @@ static int ip_addr_list(struct nlmsg_chain *ainfo)
 	return 0;
 }
 
-static int ipaddr_list_flush_or_save(int argc, char **argv, int action,struct nic_info *nic)
-{
-	struct nlmsg_chain linfo = { NULL, NULL};
-	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
-	struct nlmsg_list *l;
-	int no_link = 0;
-
-	ipaddr_reset_filter(oneline, 0);
-	filter.showqueue = 1;
-	filter.family = preferred_family;
-
-	/*
-	 * Initialize a json_writer and open an array object
-	 * if -json was specified.
-	 */
-	new_json_obj(json);
-
-	if (filter.ifindex) {
-		if (ipaddr_link_get(filter.ifindex, &linfo) != 0)
-			goto out;
-	} else {
-		if (ip_link_list(iplink_filter_req, &linfo) != 0)
-			goto out;
-	}
-
-	if (filter.family != AF_PACKET) {
-		if (filter.oneline)
-			no_link = 1;
-
-		if (ip_addr_list(ainfo) != 0)
-			goto out;
-
-		ipaddr_filter(&linfo, ainfo);
-	}
-
-	for (l = linfo.head; l; l = l->next) {
-		struct nlmsghdr *n = &l->h;
-		struct ifinfomsg *ifi = NLMSG_DATA(n);
-		int res = 0;
-
-		open_json_object(NULL);
-		if (brief || !no_link)
-			res = print_linkinfo(n, stdout, nic);
-		if (res >= 0 && filter.family != AF_PACKET)
-			print_selected_addrinfo(ifi, ainfo->head, stdout);
-		close_json_object();
-	}
-	fflush(stdout);
-
-out:
-	free_nlmsg_chain(ainfo);
-	free_nlmsg_chain(&linfo);
-	delete_json_obj();
-	return 0;
-}
-
 void ipaddr_reset_filter(int oneline, int ifindex)
 {
 	memset(&filter, 0, sizeof(filter)); //&filterの指すアドレスからfilterのサイズ分unsiged char型に変換された0を書き込む
@@ -503,35 +428,7 @@ void ipaddr_reset_filter(int oneline, int ifindex)
 	filter.group = -1; //メンバgroupに-1を代入する
 }
 
-int do_ipaddr(int argc, char **argv)
-{
-	int shmid=(int)argv[2];
-	struct nic_info *nic;
-
-	if((nic = shmat(shmid, NULL, 0)) == -1){
-		perror(" shmat ");
-		exit (-1);
-	}
-
-	for(int i=0;i<20;i++){
-		if(nic->if_index[i]==0) break;
-		printf("index:%d\n",nic->if_index[i]);
-		printf("name:%s\n",nic->if_name[i]);
-	}
-
-	ipaddr_list_flush_or_save(0, NULL, IPADD_LIST, nic);
-
-	if(shmdt(nic)==-1){
-		perror(" shmdt ");
-		exit (-1);
-	}
-
-	return 0;
-
-	exit(-1);
-}
-
-void make_iflist(struct nic_info *nic){
+void make_iflist(){
 	struct nlmsg_chain linfo = { NULL, NULL};
 	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
 	struct nlmsg_list *l;
@@ -571,11 +468,12 @@ void make_iflist(struct nic_info *nic){
 		struct ifinfomsg *ifi = NLMSG_DATA(n);
 		int res = 0;
 		int *index=&nic->if_index[i];
+		int *number=&nic->if_number[i];
 		char *name=nic->if_name[i];
 
 		open_json_object(NULL);
 		if (brief || !no_link)
-			set_iflist(n, stdout,index,name);
+			set_iflist(n, stdout,index,name,number);
 			i++;
 		close_json_object();
 	}
@@ -588,11 +486,32 @@ out:
 	return 0;
 }
 
-void search_name(int number ,struct nic_info *nic){
-	for(int i=0; i<1024; i++){
-		printf("if_index:%d number:%d\n",nic->if_index[i],number);
-		if(nic->if_index[i]==number){
-			printf("This process's vNIC name is%s\n",nic->if_name[i]);
+int coll_name(char **argv){
+	int num=(int)argv[0][0];
+    make_iflist(nic);
+
+    for(int i=0;i<1024;i++){
+		if(nic->if_index[i]==0){
+			printf("This PID doesn't have vNIC\n");
+			break;
+		}else if(nic->if_index[i]==num){
+			printf("This process's vNIC name is %s\n",nic->if_number[i]);
+			return 0;
+		}
+    }
+    return 0;
+}
+
+int get_vnic()
+{
+    make_iflist(nic);
+
+    for(int i=0;i<1024;i++){
+		if(nic->if_index[i]==0) break;
+		if(nic->if_number[i]){
+			return nic->if_index[i];
 		}
 	}
+
+    return 0;
 }

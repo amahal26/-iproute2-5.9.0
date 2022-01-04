@@ -29,14 +29,24 @@ struct link_filter {
 	int target_nsid;
 };
 
+struct nic_info{
+	int if_index[1024];
+	char if_name[1024][20];
+	int if_number[1024];
+};
+
+struct nic_info nic_info;
+struct nic_info *nic=&nic_info;
+
 int get_operstate(const char *name);//
-int print_linkinfo(struct nlmsghdr *n, void *arg, struct nic_info *nic);//
+int print_linkinfo(struct nlmsghdr *n, void *arg);//
 int print_addrinfo(struct nlmsghdr *n, void *arg);//
 void ipaddr_reset_filter(int oneline, int ifindex);
 
 void netns_nsid_socket_init(void);//
-int do_ipaddr(int argc, char **argv);//
+int coll_name(char **argv);//
 int do_netns(int argc, char **argv);//
+int get_vnic();
 
 void vrf_reset(void);
 
@@ -61,14 +71,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 #define     LABEL_MAX_MASK          0xFFFFFU
 #endif
 
-int set_iflist(struct nlmsghdr *n, void *arg, char *num, char *name);
-void make_iflist(struct nic_info *nic);
-int if_number;
-void search_name(int number, struct nic_info *nic);
-
-struct nic_info{
-	int if_index[1024];
-	char if_name[1024][20];
-};
+int set_iflist(struct nlmsghdr *n, void *arg, char *index, char *name, int *number);
+void make_iflist();
+void search_name(int number);
 
 #endif /* _IP_COMMON_H_ */
