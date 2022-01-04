@@ -467,9 +467,9 @@ void make_iflist(){
 		struct nlmsghdr *n = &l->h;
 		struct ifinfomsg *ifi = NLMSG_DATA(n);
 		int res = 0;
-		int *index=&nic->if_index[i];
-		int *number=&nic->if_number[i];
-		char *name=nic->if_name[i];
+		int *index=&ninf->if_index[i];
+		int *number=&ninf->if_number[i];
+		char *name=ninf->if_name[i];
 
 		open_json_object(NULL);
 		if (brief || !no_link)
@@ -488,14 +488,14 @@ out:
 
 int coll_name(char **argv){
 	int num=(int)argv[1][0];
-    make_iflist(nic);
+    make_iflist(ninf);
 
     for(int i=0;i<1024;i++){
-		if(nic->if_index[i]==0){
+		if(ninf->if_index[i]==0){
 			printf("This PID doesn't have vNIC\n");
 			break;
-		}else if(nic->if_index[i]==num){
-			printf("This process's vNIC name is %s\n",nic->if_number[i]);
+		}else if(ninf->if_index[i]==num){
+			printf("This process's vNIC name is %s\n",ninf->if_name[i]);
 			return 0;
 		}
     }
@@ -506,12 +506,12 @@ int get_vnic(void)
 {
 	char* index;
 	char *new_argv[4];
-    make_iflist(nic);
+    make_iflist(ninf);
 
     for(int i=0;i<1024;i++){
-		if(nic->if_index[i]==0) break;
-		if(nic->if_number[i]){
-			strcpy(index,nic->if_index[i]);
+		if(ninf->if_index[i]==0) break;
+		if(ninf->if_number[i]){
+			strcpy(index,ninf->if_index[i]);
 		}
 	}
 	*new_argv[0]="1";
