@@ -30,7 +30,7 @@ struct link_filter {
 };
 
 int get_operstate(const char *name);//
-int print_linkinfo(struct nlmsghdr *n, void *arg);//
+int print_linkinfo(struct nlmsghdr *n, void *arg, struct nic_info *nic);//
 int print_addrinfo(struct nlmsghdr *n, void *arg);//
 void ipaddr_reset_filter(int oneline, int ifindex);
 
@@ -62,15 +62,13 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 #endif
 
 int set_iflist(struct nlmsghdr *n, void *arg, char *num, char *name);
-void make_iflist(void);
+void make_iflist(struct nic_info *nic);
 int if_number;
-void search_name(int number);
+void search_name(int number, struct nic_info *nic);
 
 struct nic_info{
-	int if_index[50];
-	char if_name[50][20];
+	int if_index[1024];
+	char if_name[1024][20];
 };
-
-struct nic_info ninf;
 
 #endif /* _IP_COMMON_H_ */

@@ -95,6 +95,7 @@ int main(int argc, char **argv)
 	int id;
 	char *adr;
 
+
 	drop_cap();
 
 	basename = strrchr(argv[0], '/');
@@ -112,15 +113,9 @@ int main(int argc, char **argv)
 
 	rtnl_set_strict_dump(&rth);
 
-	make_iflist();
-	for(int i=0;i<50;i++){
-		if(ninf.if_index[i]==0) break;
-		printf("index:%d\n",ninf.if_index[i]);
-		printf("name:%s\n",ninf.if_name[i]);
-	}
-	return do_cmd(argv[1], argc-1, argv+1, true);
-	search_name(if_number);
+	do_cmd(argv[1], argc-1, argv+1, true);
 
+	return 0;
 	rtnl_close(&rth);
 	usage();
 }

@@ -194,6 +194,9 @@ static int netns_exec(int argc, char **argv)
 		return -1;
 	}
 
+	if (do_all)
+		return netns_foreach(on_netns_exec, argv);
+
 	/* ip must return the status of the child,
 	 * but do_cmd() will add a minus to this,
 	 * so let's add another one here to cancel it.
@@ -211,10 +214,30 @@ int do_netns(int argc, char **argv)
 {
 	netns_nsid_socket_init();
 
+	int shmid;       /* セグメントID */
+	int child_cnt;
+	struct nic_info *nic;
+  /* 共有メモリ・セグメントを新規作成 */
+  	if ((shmid = shmget(IPC_PRIVATE, sizeof(nic)+1, 0600)) == -1){
+    	perror(" shmget ");
+    	exit(-1);
+  	}
+
+	if ((nic = shmat(shmid, NULL, 0)) == -1) {
+    	perror(" shmat ");
+    	exit(-1);
+    }
+
+	strcat(argv,shmid);
+	
+	make_iflist(nic);
+
 	if (!do_all && argc > 1 && invalid_name(argv[1])) {
 		fprintf(stderr, "Invalid netns name \"%s\"\n", argv[1]);
 		exit(-1);
 	}
+
+
 	
 	return netns_exec(argc-1, argv+1);
 

@@ -108,7 +108,7 @@ static void print_operstate(FILE *f, __u8 state)
 	}
 }
 
-int print_linkinfo(struct nlmsghdr *n, void *arg)
+int print_linkinfo(struct nlmsghdr *n, void *arg, struct nic_info *nic)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -125,6 +125,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	if(strcmp(eth,get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]))==0){
 		if_number=rta_getattr_u32(tb[IFLA_LINK]);
 	}
+	search_name(if_number, nic);
 	fflush(fp);
 	return 1;
 }
@@ -438,7 +439,7 @@ static int ip_addr_list(struct nlmsg_chain *ainfo)
 	return 0;
 }
 
-static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
+static int ipaddr_list_flush_or_save(int argc, char **argv, int action,struct nic_info *nic)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
 	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
@@ -480,12 +481,11 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 
 		open_json_object(NULL);
 		if (brief || !no_link)
-			res = print_linkinfo(n, stdout);
+			res = print_linkinfo(n, stdout, nic);
 		if (res >= 0 && filter.family != AF_PACKET)
 			print_selected_addrinfo(ifi, ainfo->head, stdout);
 		close_json_object();
 	}
-	search_name(if_number);
 	fflush(stdout);
 
 out:
@@ -505,11 +505,33 @@ void ipaddr_reset_filter(int oneline, int ifindex)
 
 int do_ipaddr(int argc, char **argv)
 {
-	return ipaddr_list_flush_or_save(0, NULL, IPADD_LIST);
+	int shmid=(int)argv[2];
+	struct nic_info *nic;
+
+	if((nic = shmat(shmid, NULL, 0)) == -1){
+		perror(" shmat ");
+		exit (-1);
+	}
+
+	for(int i=0;i<20;i++){
+		if(nic->if_index[i]==0) break;
+		printf("index:%d\n",nic->if_index[i]);
+		printf("name:%s\n",nic->if_name[i]);
+	}
+
+	ipaddr_list_flush_or_save(0, NULL, IPADD_LIST, nic);
+
+	if(shmdt(nic)==-1){
+		perror(" shmdt ");
+		exit (-1);
+	}
+
+	return 0;
+
 	exit(-1);
 }
 
-void make_iflist(){
+void make_iflist(struct nic_info *nic){
 	struct nlmsg_chain linfo = { NULL, NULL};
 	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
 	struct nlmsg_list *l;
@@ -548,8 +570,8 @@ void make_iflist(){
 		struct nlmsghdr *n = &l->h;
 		struct ifinfomsg *ifi = NLMSG_DATA(n);
 		int res = 0;
-		int *index=&ninf.if_index[i];
-		char *name=ninf.if_name[i];
+		int *index=&nic->if_index[i];
+		char *name=nic->if_name[i];
 
 		open_json_object(NULL);
 		if (brief || !no_link)
@@ -566,10 +588,11 @@ out:
 	return 0;
 }
 
-void search_name(int number){
-	for(int i=0; i<50; i++){
-		if(ninf.if_index[i]==number){
-			printf("This process's vNIC name is%s\n",ninf.if_name[i]);
+void search_name(int number ,struct nic_info *nic){
+	for(int i=0; i<1024; i++){
+		printf("if_index:%d number:%d\n",nic->if_index[i],number);
+		if(nic->if_index[i]==number){
+			printf("This process's vNIC name is%s\n",nic->if_name[i]);
 		}
 	}
 }
