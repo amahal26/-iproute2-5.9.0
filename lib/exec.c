@@ -21,10 +21,6 @@ int cmd_exec(const char *cmd, char **argv, bool do_fork,
 			exit(1);
 		}
 
-		if(pid==0){
-			execvp(cmd, argv);
-		}
-
 		if (pid != 0) {
 			/* Parent  */
 			if (waitpid(pid, &status, 0) < 0) {
@@ -42,6 +38,7 @@ int cmd_exec(const char *cmd, char **argv, bool do_fork,
 
 	if (setup && setup(arg))
 		return -1;
+
 	if (execvp(cmd, argv)  < 0)
 		fprintf(stderr, "exec of \"%s\" failed: %s\n",
 				cmd, strerror(errno));

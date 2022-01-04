@@ -487,7 +487,7 @@ out:
 }
 
 int coll_name(char **argv){
-	int num=(int)argv[0][0];
+	int num=(int)argv[1][0];
     make_iflist(nic);
 
     for(int i=0;i<1024;i++){
@@ -502,16 +502,23 @@ int coll_name(char **argv){
     return 0;
 }
 
-int get_vnic()
+int get_vnic(void)
 {
+	char* index;
+	char *new_argv[4];
     make_iflist(nic);
 
     for(int i=0;i<1024;i++){
 		if(nic->if_index[i]==0) break;
 		if(nic->if_number[i]){
-			return nic->if_index[i];
+			strcpy(index,nic->if_index[i]);
 		}
 	}
+	*new_argv[0]="1";
+	*new_argv[1]=COMMAND_NAME;
+	*new_argv[2]=&index;
+	*new_argv[3]=DEFAULT_KEY;
+	do_netns(4,new_argv);
 
     return 0;
 }

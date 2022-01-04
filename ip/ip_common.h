@@ -8,6 +8,8 @@
 
 #include "json_print.h"
 
+#define COMMAND_NAME "ip"
+
 struct link_filter {
 	int ifindex;
 	int family;
@@ -46,7 +48,8 @@ void ipaddr_reset_filter(int oneline, int ifindex);
 void netns_nsid_socket_init(void);//
 int coll_name(char **argv);//
 int do_netns(int argc, char **argv);//
-int get_vnic();
+int back_netns(int argc, char **argv);//
+int get_vnic(void);
 
 void vrf_reset(void);
 
@@ -74,5 +77,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 int set_iflist(struct nlmsghdr *n, void *arg, char *index, char *name, int *number);
 void make_iflist();
 void search_name(int number);
+
+#define DEFAULT_KEY "back_to_default_nns"
+#define ANOTHER_KEY "go_to_another_nns"
 
 #endif /* _IP_COMMON_H_ */
