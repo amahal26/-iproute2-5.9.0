@@ -38,7 +38,6 @@ struct nic_info{
 };
 
 struct nic_info nic_info;
-struct nic_info *ninf=&nic_info;
 
 int get_operstate(const char *name);//
 int print_linkinfo(struct nlmsghdr *n, void *arg);//

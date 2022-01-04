@@ -432,6 +432,7 @@ void make_iflist(){
 	struct nlmsg_chain linfo = { NULL, NULL};
 	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = &_ainfo;
 	struct nlmsg_list *l;
+	struct nic_info *ninf=&nic_info;
 	int no_link = 0;
 
 	ipaddr_reset_filter(oneline, 0);
@@ -488,6 +489,8 @@ out:
 
 int coll_name(char **argv){
 	int num=(int)argv[1][0];
+	struct nic_info *ninf=&nic_info;
+
     make_iflist(ninf);
 
     for(int i=0;i<1024;i++){
@@ -506,6 +509,8 @@ int get_vnic(void)
 {
 	char* index;
 	char *new_argv[4];
+	struct nic_info *ninf=&nic_info;
+
     make_iflist(ninf);
 
     for(int i=0;i<1024;i++){
